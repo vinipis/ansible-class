@@ -1,0 +1,11 @@
+---
+- name: restart ssh
+  service:
+    name: ssh
+    state: restarted
+  listen: "restart ssh"
+
+- name: restart systemd-sysctl
+  service:
+    name: systemd-sysctl
+    state: restarted

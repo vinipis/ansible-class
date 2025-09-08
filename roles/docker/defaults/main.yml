@@ -1,0 +1,18 @@
+# Versões (vazio = latest do repositório)
+docker_package_state: present   # present | latest
+docker_users: []                # ex.: ['vini', 'deploy']
+
+# Configuração do daemon
+docker_daemon:
+  exec-opts:
+    - "native.cgroupdriver=systemd"
+  log-driver: "json-file"
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+  storage-driver: "overlay2"
+
+# Proxy (opcional) – deixe vazio se não usar
+docker_http_proxy: ""
+docker_https_proxy: ""
+docker_no_proxy: "localhost,127.0.0.1"

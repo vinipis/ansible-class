@@ -1,0 +1,6 @@
+---
+# Exemplo: garantir apparmor e ajustar algo específico
+- name: Ensure AppArmor on 20.04
+  apt:
+    name: apparmor
+    state: present

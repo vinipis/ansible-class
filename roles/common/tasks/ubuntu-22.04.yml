@@ -1,0 +1,8 @@
+---
+# Exemplo: sysstat vem desativado — garantir enable do serviço sa1/sa2
+- name: Enable sysstat collection on 22.04
+  lineinfile:
+    path: /etc/default/sysstat
+    regexp: '^ENABLED='
+    line: 'ENABLED="true"'
+  notify: restart systemd-sysctl

@@ -1,0 +1,13 @@
+---
+- name: Set up for Node.js 0.10.
+  command:  curl --silent --location https://rpm.nodesource.com/setup | bash -
+  when: nodejs_version = '0.10'
+
+- name: Set up for Node.js.
+  command: "curl --silent --location https://rpm.nodesource.com/setup_{{ nodejs_version }} | bash -"
+  when: nodejs_version != '0.10'
+
+- name: Ensure NodeJS is installed.
+  yum:
+    name: nodejs
+    state: present

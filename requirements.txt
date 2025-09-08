@@ -1,0 +1,8 @@
+#Ansible Needed
+ansible
+ansible_merge_vars
+pywinrm
+redis
+passlib
+boto3
+parsimonious

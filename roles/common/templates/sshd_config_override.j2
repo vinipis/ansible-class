@@ -1,0 +1,7 @@
+# Drop-in gerado pelo Ansible (não edite manualmente)
+# /etc/ssh/sshd_config.d/99-override.conf
+PasswordAuthentication {{ 'yes' if ssh_passwordauth_enable else 'no' }}
+PubkeyAuthentication yes
+ChallengeResponseAuthentication no
+UsePAM yes
+PermitRootLogin prohibit-password

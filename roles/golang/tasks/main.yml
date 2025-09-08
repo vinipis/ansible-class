@@ -1,0 +1,29 @@
+---
+- name: Installing Golang
+  unarchive:
+    src: "https://golang.org/dl/go{{ go_version }}.linux-amd64.tar.gz"
+    dest: "/opt/"
+    remote_src: yes
+    mode: 0775
+
+- name: Adjust permissions 
+  file:
+    path: "/opt/go/pkg"
+    state: directory
+    recurse: yes
+    mode: 0777
+
+- name: Declare variables
+  lineinfile:
+    dest: /etc/environment
+    line: "{{ item }}"
+  with_items:
+    - 'GOPATH="/opt/go"'
+    - 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/opt/go/bin"'
+
+- name: Set timezone
+  file:
+    src: "/opt/go/bin/go"
+    dest: "/usr/local/bin/go"
+    state: link
+    force: yes

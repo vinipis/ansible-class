@@ -1,0 +1,7 @@
+---
+# 24.04 tem python3 por padrão; manter pipx (opcional) etc.
+- name: Ensure base tooling on 24.04
+  apt:
+    name:
+      - software-properties-common
+    state: present

@@ -1,0 +1,59 @@
+---
+# ===== Pacotes =====
+common_packages:
+  - auditd
+  - byobu
+  - curl
+  - dstat
+  - git-core           # será mapeado p/ git
+  - htop
+  - iftop
+  - iotop
+  - iptraf             # será mapeado p/ iptraf-ng
+  - lvm2
+  - mtr
+  - multitail
+  - net-tools
+  - nethogs
+  - python-setuptools  # será mapeado p/ python3-setuptools
+  - rsync
+  - s3cmd
+  - sysstat
+  - traceroute
+  - unzip
+  - vim
+  - zsh
+
+pip_common_packages:
+  - boto
+  - boto3
+
+client_packages: []     # pacotes “extras” por cliente/ambiente
+
+# ===== Debconf (kexec-tools como no seu exemplo) =====
+debconf_answers:
+  - name: "kexec-tools kexec-tools/load_kexec"
+    question: "kexec-tools/load_kexec"
+    vtype: "boolean"
+    value: "false"
+  - name: "kexec-tools kexec-tools/use_grub_config"
+    question: "kexec-tools/use_grub_config"
+    vtype: "boolean"
+    value: "false"
+
+# ===== Sistema =====
+timezone: "UTC"
+locales:
+  - "en_US.UTF-8"
+  - "pt_BR.UTF-8"
+  - "es_AR.UTF-8"
+default_locale: "en_US.UTF-8"
+
+dist_upgrade: true
+custom_repos: true        # ex.: habilitar universe no Ubuntu
+ip_forward: true
+
+ssh_passwordauth_enable: false  # false = desabilita senha (somente chave)
+
+# ===== Segurança/Manutenção =====
+enable_unattended_upgrades: true

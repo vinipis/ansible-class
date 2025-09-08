@@ -1,0 +1,8 @@
+{{
+  {
+    'exec-opts': docker_daemon['exec-opts'] | default([]),
+    'log-driver': docker_daemon['log-driver'] | default('json-file'),
+    'log-opts': docker_daemon['log-opts'] | default({}),
+    'storage-driver': docker_daemon['storage-driver'] | default('overlay2')
+  } | to_nice_json
+}}

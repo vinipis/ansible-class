@@ -1,0 +1,43 @@
+---
+- name: Ensure dependencies (RHEL-like)
+  package:
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+      - ca-certificates
+      - curl
+    state: present
+
+- name: Add Docker yum repository
+  yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: "https://download.docker.com/linux/{{ 'centos' if ansible_facts['distribution'] | lower in ['centos','rocky','almalinux'] else ansible_facts['distribution'] | lower }}/$releasever/$basearch/stable"
+    enabled: yes
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/centos/gpg
+
+- name: Remove old docker packages (if any)
+  package:
+    name:
+      - docker
+      - docker-client
+      - docker-client-latest
+      - docker-common
+      - docker-latest
+      - docker-latest-logrotate
+      - docker-logrotate
+      - docker-engine
+    state: absent
+  ignore_errors: yes
+
+- name: Install Docker engine (RHEL-like)
+  package:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: "{{ docker_package_state }}"

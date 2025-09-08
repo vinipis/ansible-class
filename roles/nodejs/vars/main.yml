@@ -1,0 +1,4 @@
+nodejs_stable_versions:
+  - 6.x 
+  - 8.x
+  - 9.x

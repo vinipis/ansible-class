@@ -1,0 +1,157 @@
+---
+- name: Ensure apt is usable and cache is fresh
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+# Repositórios “custom”
+- name: Enable Ubuntu universe (if Ubuntu)
+  when:
+    - custom_repos
+    - ansible_facts['distribution'] == 'Ubuntu'
+  apt_repository:
+    repo: "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_facts['distribution_release'] }} universe"
+    state: present
+  register: add_universe
+
+- name: Update cache after adding repos
+  when: add_universe is changed
+  apt:
+    update_cache: yes
+
+# Debconf preseed (kexec-tools etc.)
+- name: Preseed debconf answers
+  debconf:
+    name: "{{ item.name.split()[0] }}"
+    question: "{{ item.question }}"
+    vtype: "{{ item.vtype }}"
+    value: "{{ item.value }}"
+  loop: "{{ debconf_answers }}"
+
+# Upgrade (opcional)
+- name: Dist upgrade
+  when: dist_upgrade
+  apt:
+    upgrade: dist
+    update_cache: yes
+
+# Converte nomes legados -> atuais
+- name: Build final package list (rename legacy -> current)
+  ansible.builtin.set_fact:
+    _mapped_common_packages: >-
+      {{ (_mapped_common_packages | default([]))
+         + [ (pkg_rename_map[item] if item in pkg_rename_map else item) ] }}
+  loop: "{{ (common_packages | default([])) + (client_packages | default([])) }}"
+
+# Instala pacotes
+- name: Install common packages
+  ansible.builtin.apt:
+    name: "{{ _mapped_common_packages | default([]) }}"
+    state: present
+    update_cache: yes
+
+# Python3 pip para boto/boto3
+# --- boto/boto3 --------------------------------------------------------------
+- name: Install boto libs via APT (PEP 668 safe)
+  when: pip_install_mode == "distro"
+  ansible.builtin.apt:
+    name:
+      - python3-boto
+      - python3-boto3
+    state: present
+    update_cache: yes
+
+- name: Ensure python3-venv and pip present (for venv)
+  when: pip_install_mode == "venv"
+  ansible.builtin.apt:
+    name:
+      - python3-venv
+      - python3-pip
+    state: present
+
+- name: Create virtualenv for common Python tools
+  when: pip_install_mode == "venv"
+  ansible.builtin.command: "python3 -m venv {{ pip_venv_path }}"
+  args:
+    creates: "{{ pip_venv_path }}/bin/activate"
+
+- name: Install pip packages into venv
+  when: pip_install_mode == "venv"
+  ansible.builtin.pip:
+    name: "{{ pip_common_packages }}"
+    virtualenv: "{{ pip_venv_path }}"
+    virtualenv_site_packages: false
+
+- name: (Not recommended) Install with --break-system-packages
+  when: pip_install_mode == "system"
+  ansible.builtin.apt:
+    name: python3-pip
+    state: present
+
+- name: (Not recommended) pip install system-wide breaking PEP 668
+  when: pip_install_mode == "system"
+  ansible.builtin.pip:
+    name: "{{ pip_common_packages }}"
+    executable: pip3
+    extra_args: --break-system-packages
+
+- name: Install pip packages (system-wide)
+  pip:
+    name: "{{ pip_common_packages }}"
+    executable: pip3
+
+# Timezone
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+# Locales
+- name: Generate locales
+  locale_gen:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ locales }}"
+
+- name: Set default locale
+  command: "update-locale LANG={{ default_locale }}"
+  changed_when: false
+
+# IP Forward
+- name: Ensure net.ipv4.ip_forward
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: "{{ 1 if ip_forward else 0 }}"
+    state: present
+    reload: yes
+
+# SSH endurecimento via drop-in (não sobrescreve arquivo principal)
+- name: Ensure sshd drop-in directory
+  file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    mode: "0755"
+
+- name: Write sshd override
+  template:
+    src: sshd_config_override.j2
+    dest: /etc/ssh/sshd_config.d/99-override.conf
+    mode: "0644"
+  notify: restart ssh
+
+# Unattended-upgrades (opcional)
+- name: Install unattended-upgrades
+  when: enable_unattended_upgrades
+  apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+
+- name: Enable unattended-upgrades (Debian/Ubuntu)
+  when: enable_unattended_upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";

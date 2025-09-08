@@ -1,0 +1,64 @@
+---
+- name: Include Debian family tasks
+  include_tasks: debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Include RHEL family tasks
+  include_tasks: rhel.yml
+  when: ansible_os_family in ["RedHat", "Rocky", "AlmaLinux", "OracleLinux"]
+
+- name: Ensure /etc/docker directory
+  file:
+    path: /etc/docker
+    state: directory
+    mode: "0755"
+
+- name: Configure daemon.json (safe keys with hyphens)
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+    content: >-
+      {{
+        {
+          'exec-opts': docker_daemon['exec-opts'] | default([]),
+          'log-driver': docker_daemon['log-driver'] | default('json-file'),
+          'log-opts': docker_daemon['log-opts'] | default({}),
+          'storage-driver': docker_daemon['storage-driver'] | default('overlay2')
+        } | to_nice_json
+      }}
+  notify: restart docker
+
+# Proxy opcional para o serviço (caso precise)
+- name: Configure systemd drop-in for proxy (optional)
+  when: docker_http_proxy | length > 0 or docker_https_proxy | length > 0
+  block:
+    - name: Create systemd directory for docker service
+      file:
+        path: /etc/systemd/system/docker.service.d
+        state: directory
+        mode: "0755"
+
+    - name: Write http-proxy.conf
+      copy:
+        dest: /etc/systemd/system/docker.service.d/http-proxy.conf
+        mode: "0644"
+        content: |
+          [Service]
+          {% if docker_http_proxy %}Environment="HTTP_PROXY={{ docker_http_proxy }}"{% endif %}
+          {% if docker_https_proxy %}Environment="HTTPS_PROXY={{ docker_https_proxy }}"{% endif %}
+          Environment="NO_PROXY={{ docker_no_proxy }}"
+      notify: restart docker
+
+- name: Enable and start docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add users to docker group
+  when: docker_users | length > 0
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  loop: "{{ docker_users }}"

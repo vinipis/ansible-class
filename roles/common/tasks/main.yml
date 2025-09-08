@@ -1,0 +1,23 @@
+---
+- name: Include Debian family tasks
+  when: ansible_facts['os_family'] == 'Debian'
+  include_tasks: debian.yml
+
+# Por-ubuntu-release (ajustes finos)
+- name: Ubuntu 20.04 specifics
+  when:
+    - ansible_facts['distribution'] == 'Ubuntu'
+    - ansible_facts['distribution_version'] is version('20.04', '==')
+  include_tasks: ubuntu-20.04.yml
+
+- name: Ubuntu 22.04 specifics
+  when:
+    - ansible_facts['distribution'] == 'Ubuntu'
+    - ansible_facts['distribution_version'] is version('22.04', '==')
+  include_tasks: ubuntu-22.04.yml
+
+- name: Ubuntu 24.04 specifics
+  when:
+    - ansible_facts['distribution'] == 'Ubuntu'
+    - ansible_facts['distribution_version'] is version('24.04', '==')
+  include_tasks: ubuntu-24.04.yml

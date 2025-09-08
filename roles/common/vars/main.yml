@@ -1,0 +1,6 @@
+---
+# Mapeia nomes antigos -> atuais em Debian/Ubuntu
+pkg_rename_map:
+  git-core: git
+  python-setuptools: python3-setuptools
+  iptraf: iptraf-ng
