@@ -12,10 +12,10 @@
   gather_facts: True
   roles:
     - { role: golang, tags: ['golang'] }
-    - { role: nodejs, tags: ['nodejs'] }
+    #- { role: nodejs, tags: ['nodejs'] }
 
-- hosts: webservers
-  become: True
-  gather_facts: True
-  roles:
-    - { role: nginx, tags: ['nginx'] }
+#- hosts: webservers
+#  become: True
+#  gather_facts: True
+#  roles:
+#    - { role: nginx, tags: ['nginx'] }
